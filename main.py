@@ -72,13 +72,11 @@ def kernel_binom_linear(taps, expand_by=0, reduce_by=0):
         print "ERR: previous error"
         return None
 
-    w = res['weights']
-    o = res['offsets']
     w_count = len(res['weights'])
     pairs = int(w_count - 1)
 
     # sanity checks
-    if w_count % 2 == 0:
+    if w_count & 1 == 0:
         print "ERR: duped coefficients at center"
         return None
 
@@ -86,12 +84,12 @@ def kernel_binom_linear(taps, expand_by=0, reduce_by=0):
         print "ERR: can't perform bilinear reduction on non-paired texels"
         return None
 
-    weights = list()
-    weights.append(w[0])
+    w = res['weights']
+    weights = [w[0]]
     weights.extend([w[x] + w[x + 1] for x in xrange(1, w_count - 1, 2)])
 
-    offsets = list()
-    offsets.append(0)
+    o = res['offsets']
+    offsets = [0]
     offsets.extend([(o[x] * w[x] + o[x + 1] * w[x + 1]) / weights[i + 1]
                     for i, x in enumerate(xrange(1, w_count - 1, 2))])
 
@@ -139,10 +137,10 @@ def main():
     else:
         # debug
 
-        taps = 5
+        taps = 9
         exp = 2
         red = 2
-        linear = False
+        linear = True
 
     print "Computing a %(taps)sx%(taps)s kernel (+%(exp)s/-%(red)s)" \
           "%(desc)s" % \
