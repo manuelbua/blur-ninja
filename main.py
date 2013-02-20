@@ -1,15 +1,31 @@
 #!/usr/bin/env python2
 # coding=utf-8
-
 """
-Comments
+Compute the optimal weights and offsets for a given n-tap blur filter kernel.
+
+Both discrete and linear sampling are supported, for an in-depth article on
+the subject, please refer to the following url:
+
+http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
+
 """
 
 __license__ = """
-"""
+Copyright 2012 Manuel Bua
 
-__version__ = "0.0.1"
-__author__ = "manuel"
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+"""
 
 import sys
 import math
@@ -17,8 +33,7 @@ import argparse
 
 
 # FYI, efficient gaussian blur is described in great detail here:
-# http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear
-# -sampling/
+#
 
 def binom(row_index, column_index=None):
     if column_index is None:
@@ -38,13 +53,16 @@ def binom(row_index, column_index=None):
     )
 
 
-def draw_binom(rows_count):
-    length = len(str(binom(rows_count - 1)))
-    for i in xrange(rows_count):
+def draw_pascal(cols_count):
+    length = len(str(binom(cols_count)))
+    for i in xrange(cols_count):
         print ("{:^" + str(length) + "}").format(str(binom(i)))
 
 
 def kernel_binom(taps, expand_by=0, reduce_by=0):
+    """Compute discrete weights and factors
+    """
+
     row = taps - 1 + expand_by * 2
     coeffs_count = row + 1
     radius = int(taps / 2)
@@ -67,9 +85,12 @@ def kernel_binom(taps, expand_by=0, reduce_by=0):
 
 
 def kernel_binom_linear(taps, expand_by=0, reduce_by=0):
+    """Compute linearly interpolated weights and factors
+    """
+
     res = kernel_binom(taps, expand_by, reduce_by)
     if res is None:
-        print "ERR: previous error"
+        print "ERR: can't perform linear reduction pass, no input data"
         return None
 
     w_count = len(res['weights'])
@@ -84,13 +105,13 @@ def kernel_binom_linear(taps, expand_by=0, reduce_by=0):
         print "ERR: can't perform bilinear reduction on non-paired texels"
         return None
 
-    w = res['weights']
-    weights = [w[0]]
-    weights.extend([w[x] + w[x + 1] for x in xrange(1, w_count - 1, 2)])
+    wd = res['weights']
+    weights = [wd[0]]
+    weights.extend([wd[x] + wd[x + 1] for x in xrange(1, w_count - 1, 2)])
 
-    o = res['offsets']
+    od = res['offsets']
     offsets = [0]
-    offsets.extend([(o[x] * w[x] + o[x + 1] * w[x + 1]) / weights[i + 1]
+    offsets.extend([(od[x] * wd[x] + od[x + 1] * wd[x + 1]) / weights[i + 1]
                     for i, x in enumerate(xrange(1, w_count - 1, 2))])
 
     res['weights'] = weights
@@ -142,19 +163,24 @@ def main():
         red = 2
         linear = True
 
-    print "Computing a %(taps)sx%(taps)s kernel (+%(exp)s/-%(red)s)" \
+    print "Computing a %(taps)s-tap filter kernel (+%(exp)s/-%(red)s)" \
           "%(desc)s" % \
           {'taps': taps, 'exp': exp * 2, 'red': red * 2,
-           'desc': ", linear sampling" if linear else ""}
+           'desc': " reduced by linear sampling" if linear else ""}
 
+    print "Initial gaussian distribution: {0}".format(str(binom(taps - 1)))
+
+    ntap = taps
     if linear:
         res = kernel_binom_linear(taps, exp, red)
+        ntap = (len(res['weights']) * 2) - 1
     else:
         res = kernel_binom(taps, exp, red)
 
-    if res is not None:
-        radius = int(taps / 2)
-        print "Radius:", str(radius), "(+1)"
+    if res is not None and ntap > 0:
+        if linear:
+            print "Optimized to {0}-tap filter kernel".format(ntap)
+
         print "weights:", ["{:.6f}".format(x) for x in res["weights"]]
         print "offsets:", ["{:.6f}".format(x) for x in res["offsets"]]
 
