@@ -47,29 +47,23 @@ def draw_binom(rows_count):
 def kernel_binom(taps, expand_by=0, reduce_by=0):
     row = taps - 1 + expand_by * 2
     coeffs_count = row + 1
+    radius = int(taps / 2)
 
     # sanity check, avoid duped coefficients at center
     if coeffs_count & 1 == 0:
         print "ERR: duped coefficients at center"
         return None
 
-    left = 0 + reduce_by
-    right = coeffs_count - reduce_by
-
-    r = int((right - left) / 2)
-    offsets_range = xrange(right - left)
-
     # compute total weight
     s = lambda x: binom(row, x) * 2
     total = math.pow(2, row) - sum(map(s, xrange(reduce_by)))
 
     # compute final weights
-    coeffs = [binom(row, x) / total for x in xrange(left, right)]
+    weights = [binom(row, x) / total
+               for x in xrange(reduce_by + radius, reduce_by - 1, -1)]
+    offsets = range(radius + 1)
 
-    offsets_h = [(-r + i, 0) for i, x in enumerate(offsets_range)]
-    offsets_v = [(0, -r + i) for i, x in enumerate(offsets_range)]
-
-    return dict(weights=coeffs, offsets_h=offsets_h, offsets_v=offsets_v)
+    return dict(weights=weights, offsets=offsets)
 
 
 def kernel_binom_linear(taps, expand_by=0, reduce_by=0):
@@ -79,11 +73,9 @@ def kernel_binom_linear(taps, expand_by=0, reduce_by=0):
         return None
 
     w = res['weights']
-    oh = res['offsets_h']
-    ov = res['offsets_v']
+    o = res['offsets']
     w_count = len(res['weights'])
-    mid = int(w_count / 2)
-    pairs = int((w_count - 1) / 2)
+    pairs = int(w_count - 1)
 
     # sanity checks
     if w_count % 2 == 0:
@@ -94,23 +86,17 @@ def kernel_binom_linear(taps, expand_by=0, reduce_by=0):
         print "ERR: can't perform bilinear reduction on non-paired texels"
         return None
 
-    weights = [w[x] + w[x + 1] for x in xrange(0, pairs, 2)]
-    weights.append(w[mid])
-    weights += reversed(weights[:-1])
+    weights = list()
+    weights.append(w[0])
+    weights.extend([w[x] + w[x + 1] for x in xrange(1, w_count - 1, 2)])
 
-    offsets_h = [((oh[x][0] * w[x] + oh[x + 1][0] * w[x + 1]) / weights[i], 0)
-                 for i, x in enumerate(xrange(0, pairs, 2))]
-    offsets_h.append((0, 0))
-    offsets_h += [(-x[0], 0) for x in reversed(offsets_h[:-1])]
-
-    offsets_v = [(0, (ov[x][1] * w[x] + ov[x + 1][1] * w[x + 1]) / weights[i])
-                 for i, x in enumerate(xrange(0, pairs, 2))]
-    offsets_v.append((0, 0))
-    offsets_v += [(0, -x[1]) for x in reversed(offsets_v[:-1])]
+    offsets = list()
+    offsets.append(0)
+    offsets.extend([(o[x] * w[x] + o[x + 1] * w[x + 1]) / weights[i + 1]
+                    for i, x in enumerate(xrange(1, w_count - 1, 2))])
 
     res['weights'] = weights
-    res['offsets_h'] = offsets_h
-    res['offsets_v'] = offsets_v
+    res['offsets'] = offsets
     return res
 
 
@@ -153,10 +139,10 @@ def main():
     else:
         # debug
 
-        taps = 9
+        taps = 5
         exp = 2
         red = 2
-        linear = True
+        linear = False
 
     print "Computing a %(taps)sx%(taps)s kernel (+%(exp)s/-%(red)s)" \
           "%(desc)s" % \
@@ -171,14 +157,8 @@ def main():
     if res is not None:
         radius = int(taps / 2)
         print "Radius:", str(radius), "(+1)"
-        print "weights:", ["{:f}".format(x) for x in res["weights"]]
-        print "offsets_h:", \
-            ["({:.6f}, {:.6f})".format(x, y) for x, y in res["offsets_h"]]
-        print "offsets_v:", \
-            ["({:.6f}, {:.6f})".format(x, y) for x, y in res["offsets_v"]]
-
-        # linear reduction (enable bilinear filter ON on your hardware
-        # to "play it back" correctly)
+        print "weights:", ["{:.6f}".format(x) for x in res["weights"]]
+        print "offsets:", ["{:.6f}".format(x) for x in res["offsets"]]
 
 
 if __name__ == "__main__":
