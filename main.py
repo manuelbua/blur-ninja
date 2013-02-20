@@ -123,7 +123,7 @@ def main():
         )
 
         parser.add_argument(
-            "--linear", default=0, type=int,
+            "--linear", default=False, action='store_true',
             help="Uses linear sampling to compute weights and offsets"
         )
 
