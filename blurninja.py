@@ -81,20 +81,22 @@ def main():
         ntap = (len(res_linear['weights']) * 2) - 1
 
     if res_discrete is not None:
+        float_format = "{:.8f}"
+
         print "Initial {0}-tap filter kernel coefficients:".format(taps)
         print "\tweights:", \
-            ["{:.6f}".format(x) for x in res_discrete["weights"]]
+            [float_format.format(x) for x in res_discrete["weights"]]
 
         print "\toffsets:", \
-            ["{:.6f}".format(x) for x in res_discrete["offsets"]]
+            [float_format.format(x) for x in res_discrete["offsets"]]
 
         if linear and res_linear is not None:
             print "\nOptimized {0}-tap filter kernel coefficients:".format(ntap)
             print "\tweights:", \
-                ["{:.6f}".format(x) for x in res_linear["weights"]]
+                [float_format.format(x) for x in res_linear["weights"]]
 
             print "\toffsets:", \
-                ["{:.6f}".format(x) for x in res_linear["offsets"]]
+                [float_format.format(x) for x in res_linear["offsets"]]
 
 
 if __name__ == "__main__":
