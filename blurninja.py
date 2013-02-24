@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # coding=utf-8
+
 """
 Calculates gaussian kernel weights and offsets from a binomial distribution and
 optionally adjust the weights and offsets for a linearly-sampled gaussian blur
