@@ -28,94 +28,12 @@ limitations under the License.
 
 """
 
-import sys
-import math
 import argparse
-
-
-def binom(row_index, column_index=None):
-    if column_index is None:
-        row = []
-        columns = row_index + 1
-        for c in xrange(columns):
-            row.append(
-                math.factorial(row_index) / (
-                    math.factorial(row_index - c) * math.factorial(c)
-                )
-            )
-
-        return row
-
-    return math.factorial(row_index) / (
-        math.factorial(row_index - column_index) * math.factorial(column_index)
-    )
-
-
-def draw_pascal(cols_count):
-    length = len(str(binom(cols_count)))
-    for i in xrange(cols_count):
-        print ("{:^" + str(length) + "}").format(str(binom(i)))
-
-
-def kernel_binom(taps, expand_by=0, reduce_by=0):
-    """Compute discrete weights and factors
-    """
-
-    row = taps - 1 + expand_by * 2
-    coeffs_count = row + 1
-    radius = int(taps / 2)
-
-    # sanity check, avoid duped coefficients at center
-    if coeffs_count & 1 == 0:
-        print "ERR: duped coefficients at center"
-        return None
-
-    # compute total weight
-    s = lambda x: binom(row, x) * 2
-    total = math.pow(2, row) - sum(map(s, xrange(reduce_by)))
-
-    # compute final weights
-    weights = [binom(row, x) / total
-               for x in xrange(reduce_by + radius, reduce_by - 1, -1)]
-    offsets = range(radius + 1)
-
-    return dict(weights=weights, offsets=offsets)
-
-
-def kernel_binom_linear(discrete_data):
-    """Compute linearly interpolated weights and factors
-    """
-    if discrete_data is None:
-        print "ERR: can't perform linear reduction pass, no input data"
-        return None
-
-    wd = discrete_data['weights']
-    od = discrete_data['offsets']
-
-    w_count = len(wd)
-    pairs = int(w_count - 1)
-
-    # sanity checks
-    if w_count & 1 == 0:
-        print "ERR: duped coefficients at center"
-        return None
-
-    if pairs % 2 > 0:
-        print "ERR: can't perform bilinear reduction on non-paired texels"
-        return None
-
-    weights = [wd[0]]
-    weights.extend([wd[x] + wd[x + 1] for x in xrange(1, w_count - 1, 2)])
-
-    offsets = [0]
-    offsets.extend([(od[x] * wd[x] + od[x + 1] * wd[x + 1]) / weights[i + 1]
-                    for i, x in enumerate(xrange(1, w_count - 1, 2))])
-
-    return dict(weights=weights, offsets=offsets)
+from blurninja.binom import binom
+from blurninja.kernel import kernel_binom, kernel_binom_linear
 
 
 def main():
-    # if len(sys.argv) > 1:
     parser = argparse.ArgumentParser(description="Process some data")
     parser.add_argument(
         "taps", default=5, type=int,
@@ -146,14 +64,6 @@ def main():
     red = args.reduce
     linear = args.linear
 
-    # else:
-    #     # debug
-    #
-    #     taps = 9
-    #     exp = 2
-    #     red = 2
-    #     linear = True
-
     print "Computing a %(taps)s-tap filter kernel (+%(exp)s/-%(red)s)" \
           "%(desc)s" % \
           {'taps': taps, 'exp': exp * 2, 'red': red * 2,
@@ -164,6 +74,7 @@ def main():
     ntap = taps
 
     res_discrete = kernel_binom(taps, exp, red)
+    res_linear = None
 
     if linear:
         res_linear = kernel_binom_linear(res_discrete)
