@@ -82,7 +82,7 @@ def main():
         }
 
     print "Initial gaussian distribution: {0}".format(
-        bold(str(binom(taps - 1)))
+        bold(str(binom(taps - 1 + exp * 2)))
     )
 
     ntap = taps
