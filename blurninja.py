@@ -12,7 +12,7 @@ http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
 """
 
 __license__ = """
-Copyright 2012 Manuel Bua
+Copyright 2013 Manuel Bua
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
