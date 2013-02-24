@@ -3,6 +3,7 @@
 """
 Calculates gaussian kernel weights and offsets from a binomial distribution and
 optionally adjust the weights and offsets for a linearly-sampled gaussian blur
+shader.
 
 Both discrete and linear sampling are supported, for an in-depth article on
 the subject, please refer to the following url:
@@ -34,7 +35,11 @@ from blurninja.kernel import kernel_binom, kernel_binom_linear
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Process some data")
+    parser = argparse.ArgumentParser(
+        description="Calculates gaussian kernel weights and offsets from a "
+                    "binomial distribution and optionally adjust the weights "
+                    "and offsets for a linearly-sampled gaussian blur shader.")
+
     parser.add_argument(
         "taps", default=5, type=int,
         help="Specify the number of taps (kernel size)"
