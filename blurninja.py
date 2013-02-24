@@ -30,6 +30,7 @@ limitations under the License.
 """
 
 import argparse
+from blurninja.fancy_output import bold
 from blurninja.binom import binom
 from blurninja.kernel import kernel_binom, kernel_binom_linear
 
@@ -69,12 +70,19 @@ def main():
     red = args.reduce
     linear = args.linear
 
-    print "Computing a %(taps)s-tap filter kernel (+%(exp)s/-%(red)s)" \
-          "%(desc)s" % \
-          {'taps': taps, 'exp': exp * 2, 'red': red * 2,
-           'desc': " (+linear reduction)" if linear else ""}
+    print "Computing a", \
+        bold("{0}-tap".format(taps)), \
+        "filter kernel (+%(exp)s/-%(red)s) %(desc)s" % \
+        {
+            'taps': taps,
+            'exp': exp * 2,
+            'red': red * 2,
+            'desc': " (+linear reduction)" if linear else ""
+        }
 
-    print "Initial gaussian distribution: {0}".format(str(binom(taps - 1)))
+    print "Initial gaussian distribution: {0}".format(
+        bold(str(binom(taps - 1)))
+    )
 
     ntap = taps
 
@@ -88,7 +96,10 @@ def main():
     if res_discrete is not None:
         float_format = "{:.8f}"
 
-        print "Initial {0}-tap filter kernel coefficients:".format(taps)
+        print "Initial ", \
+            bold("{0}-tap".format(taps)), \
+            "filter kernel coefficients:".format(taps)
+
         print "\tweights:", \
             [float_format.format(x) for x in res_discrete["weights"]]
 
@@ -96,7 +107,9 @@ def main():
             [float_format.format(x) for x in res_discrete["offsets"]]
 
         if linear and res_linear is not None:
-            print "\nOptimized {0}-tap filter kernel coefficients:".format(ntap)
+            print "\nOptimized", \
+                bold("{0}-tap".format(ntap)), \
+                "filter kernel coefficients:".format(ntap)
             print "\tweights:", \
                 [float_format.format(x) for x in res_linear["weights"]]
 
