@@ -42,7 +42,7 @@ def main():
 
     parser.add_argument(
         "--expand", default=0, type=int,
-        help="How much to expand the tap count (eliminate outermost "
+        help="How much to expand the tap count (expand outermost "
              "coefficients)"
     )
 
