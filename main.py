@@ -1,7 +1,8 @@
 #!/usr/bin/env python2
 # coding=utf-8
 """
-Compute the optimal weights and offsets for a given n-tap blur filter kernel.
+Calculates gaussian kernel weights and offsets from a binomial distribution and
+optionally adjust the weights and offsets for a linearly-sampled gaussian blur
 
 Both discrete and linear sampling are supported, for an in-depth article on
 the subject, please refer to the following url:
@@ -31,9 +32,6 @@ import sys
 import math
 import argparse
 
-
-# FYI, efficient gaussian blur is described in great detail here:
-#
 
 def binom(row_index, column_index=None):
     if column_index is None:
@@ -84,16 +82,17 @@ def kernel_binom(taps, expand_by=0, reduce_by=0):
     return dict(weights=weights, offsets=offsets)
 
 
-def kernel_binom_linear(taps, expand_by=0, reduce_by=0):
+def kernel_binom_linear(discrete_data):
     """Compute linearly interpolated weights and factors
     """
-
-    res = kernel_binom(taps, expand_by, reduce_by)
-    if res is None:
+    if discrete_data is None:
         print "ERR: can't perform linear reduction pass, no input data"
         return None
 
-    w_count = len(res['weights'])
+    wd = discrete_data['weights']
+    od = discrete_data['offsets']
+
+    w_count = len(wd)
     pairs = int(w_count - 1)
 
     # sanity checks
@@ -105,84 +104,86 @@ def kernel_binom_linear(taps, expand_by=0, reduce_by=0):
         print "ERR: can't perform bilinear reduction on non-paired texels"
         return None
 
-    wd = res['weights']
     weights = [wd[0]]
     weights.extend([wd[x] + wd[x + 1] for x in xrange(1, w_count - 1, 2)])
 
-    od = res['offsets']
     offsets = [0]
     offsets.extend([(od[x] * wd[x] + od[x + 1] * wd[x + 1]) / weights[i + 1]
                     for i, x in enumerate(xrange(1, w_count - 1, 2))])
 
-    res['weights'] = weights
-    res['offsets'] = offsets
-    return res
+    return dict(weights=weights, offsets=offsets)
 
 
 def main():
-    res = None
-    taps = exp = red = 0
-    linear = False
+    # if len(sys.argv) > 1:
+    parser = argparse.ArgumentParser(description="Process some data")
+    parser.add_argument(
+        "taps", default=5, type=int,
+        help="Specify the number of taps (kernel size)"
+    )
 
-    if len(sys.argv) > 1:
-        parser = argparse.ArgumentParser(description="Process some data")
-        parser.add_argument(
-            "taps", default=5, type=int,
-            help="Specify the number of taps (kernel size)"
-        )
+    parser.add_argument(
+        "--expand", default=0, type=int,
+        help="How much to expand the tap count (eliminate outermost "
+             "coefficients)"
+    )
 
-        parser.add_argument(
-            "--expand", default=0, type=int,
-            help="How much to expand the tap count (eliminate outermost "
-                 "coefficients)"
-        )
+    parser.add_argument(
+        "--reduce", default=0, type=int,
+        help="How many taps to discard at borders (eliminate outermost "
+             "coefficients)"
+    )
 
-        parser.add_argument(
-            "--reduce", default=0, type=int,
-            help="How many taps to discard at borders (eliminate outermost "
-                 "coefficients)"
-        )
+    parser.add_argument(
+        "--linear", default=False, action='store_true',
+        help="Uses linear sampling to compute weights and offsets"
+    )
 
-        parser.add_argument(
-            "--linear", default=False, action='store_true',
-            help="Uses linear sampling to compute weights and offsets"
-        )
+    args = parser.parse_args()
 
-        args = parser.parse_args()
+    taps = args.taps
+    exp = args.expand
+    red = args.reduce
+    linear = args.linear
 
-        taps = args.taps
-        exp = args.expand
-        red = args.reduce
-        linear = args.linear
-
-    else:
-        # debug
-
-        taps = 9
-        exp = 2
-        red = 2
-        linear = True
+    # else:
+    #     # debug
+    #
+    #     taps = 9
+    #     exp = 2
+    #     red = 2
+    #     linear = True
 
     print "Computing a %(taps)s-tap filter kernel (+%(exp)s/-%(red)s)" \
           "%(desc)s" % \
           {'taps': taps, 'exp': exp * 2, 'red': red * 2,
-           'desc': " reduced by linear sampling" if linear else ""}
+           'desc': " (+linear reduction)" if linear else ""}
 
     print "Initial gaussian distribution: {0}".format(str(binom(taps - 1)))
 
     ntap = taps
+
+    res_discrete = kernel_binom(taps, exp, red)
+
     if linear:
-        res = kernel_binom_linear(taps, exp, red)
-        ntap = (len(res['weights']) * 2) - 1
-    else:
-        res = kernel_binom(taps, exp, red)
+        res_linear = kernel_binom_linear(res_discrete)
+        ntap = (len(res_linear['weights']) * 2) - 1
 
-    if res is not None and ntap > 0:
-        if linear:
-            print "Optimized to {0}-tap filter kernel".format(ntap)
+    if res_discrete is not None:
+        print "Initial {0}-tap filter kernel coefficients:".format(taps)
+        print "\tweights:", \
+            ["{:.6f}".format(x) for x in res_discrete["weights"]]
 
-        print "weights:", ["{:.6f}".format(x) for x in res["weights"]]
-        print "offsets:", ["{:.6f}".format(x) for x in res["offsets"]]
+        print "\toffsets:", \
+            ["{:.6f}".format(x) for x in res_discrete["offsets"]]
+
+        if linear and res_linear is not None:
+            print "\nOptimized {0}-tap filter kernel coefficients:".format(ntap)
+            print "\tweights:", \
+                ["{:.6f}".format(x) for x in res_linear["weights"]]
+
+            print "\toffsets:", \
+                ["{:.6f}".format(x) for x in res_linear["offsets"]]
 
 
 if __name__ == "__main__":
