@@ -1,6 +1,5 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # coding=utf-8
-
 """
 Calculates gaussian kernel weights and offsets from a binomial distribution and
 optionally adjust the weights and offsets for a linearly-sampled gaussian blur
@@ -71,19 +70,17 @@ def main():
     red = args.reduce
     linear = args.linear
 
-    print "Computing a", \
-        bold("{0}-tap".format(taps)), \
-        "filter kernel (+%(exp)s/-%(red)s) %(desc)s" % \
-        {
-            'taps': taps,
-            'exp': exp * 2,
-            'red': red * 2,
-            'desc': " (+linear reduction)" if linear else ""
-        }
-
-    print "Initial gaussian distribution: {0}".format(
-        bold(str(binom(taps - 1 + exp * 2)))
+    print(
+        "Computing a", bold("{0}-tap".format(taps)),
+        "filter kernel (+%(exp)s/-%(red)s) %(desc)s" % {
+              'taps': taps,
+              'exp': exp * 2,
+              'red': red * 2,
+              'desc': " (+linear reduction)" if linear else ""
+          }
     )
+
+    print("Initial gaussian distribution: {0}".format(bold(str(binom(taps - 1 + exp * 2)))))
 
     ntap = taps
 
@@ -97,25 +94,16 @@ def main():
     if res_discrete is not None:
         float_format = "{:.8f}"
 
-        print "Initial ", \
-            bold("{0}-tap".format(taps)), \
-            "filter kernel coefficients:".format(taps)
+        print("Initial ", bold("{0}-tap".format(taps)), "filter kernel coefficients:".format(taps))
 
-        print "\tweights:", \
-            [float_format.format(x) for x in res_discrete["weights"]]
+        print("\tweights:", [float_format.format(x) for x in res_discrete["weights"]])
 
-        print "\toffsets:", \
-            [float_format.format(x) for x in res_discrete["offsets"]]
+        print("\toffsets:", [float_format.format(x) for x in res_discrete["offsets"]])
 
         if linear and res_linear is not None:
-            print "\nOptimized", \
-                bold("{0}-tap".format(ntap)), \
-                "filter kernel coefficients:".format(ntap)
-            print "\tweights:", \
-                [float_format.format(x) for x in res_linear["weights"]]
-
-            print "\toffsets:", \
-                [float_format.format(x) for x in res_linear["offsets"]]
+            print("\nOptimized", bold("{0}-tap".format(ntap)), "filter kernel coefficients:".format(ntap))
+            print("\tweights:", [float_format.format(x) for x in res_linear["weights"]])
+            print("\toffsets:", [float_format.format(x) for x in res_linear["offsets"]])
 
 
 if __name__ == "__main__":
