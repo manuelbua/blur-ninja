@@ -9,12 +9,10 @@ def binom(row_index, column_index=None):
     binomial coefficients.
     """
     if column_index is None:
-        row = []
-        columns = row_index + 1
-        for c in range(columns):
-            row.append(math.factorial(row_index) / (math.factorial(row_index - c) * math.factorial(c)))
-
-        return row
+        return [
+            math.factorial(row_index) / (math.factorial(row_index - c) * math.factorial(c))
+            for c in range(row_index + 1)
+        ]
 
     return math.factorial(row_index) / (math.factorial(row_index - column_index) * math.factorial(column_index))
 
