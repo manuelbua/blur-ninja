@@ -44,22 +44,29 @@ def kernel_binom_linear(discrete_data):
     od = discrete_data['offsets']
 
     w_count = len(wd)
-    pairs = int(w_count - 1)
 
     # sanity checks
+    pairs = int(w_count - 1)
     if w_count & 1 == 0:
-        print("ERR: duped coefficients at center")
-        return None
+        raise ValueError("Duped coefficients at center")
 
     if pairs % 2 > 0:
-        print("ERR: can't perform bilinear reduction on non-paired texels")
-        return None
+        raise ValueError("Can't perform bilinear reduction on non-paired texels")
 
     weights = [wd[0]]
-    weights.extend([wd[x] + wd[x + 1] for x in range(1, w_count - 1, 2)])
+    weights.extend(
+        [
+            wd[x] + wd[x + 1]
+            for x in range(1, w_count - 1, 2)
+        ]
+    )
 
     offsets = [0]
-    offsets.extend([(od[x] * wd[x] + od[x + 1] * wd[x + 1]) / weights[i + 1]
-                    for i, x in enumerate(range(1, w_count - 1, 2))])
+    offsets.extend(
+        [
+            (od[x] * wd[x] + od[x + 1] * wd[x + 1]) / weights[i + 1]
+            for i, x in enumerate(range(1, w_count - 1, 2))
+        ]
+    )
 
     return dict(weights=weights, offsets=offsets)

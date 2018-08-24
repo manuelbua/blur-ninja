@@ -8,13 +8,25 @@ For the non-initiated, get up to speed with this great, in-depth article on the 
 http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
 
 
-Optional dependancies
+Instructions
 ==========
 
-There is some very preliminary support for some fancy output by using [AnsiColors](https://pypi.python.org/pypi/ansicolors/1.0.2), if its already installed.
-You can install it by:
+Structure is based on [this article](https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure). Source code can be found in the `src` folder, and tests in the `tests` folder.
 
-    pip install ansicolors
+To install the package, simply execute
+
+```bash
+➤ pip install -r requirements.txt
+```
+
+We use `tox` for the tests. This ensure a clear separation between the development environment and the test environment.
+To launch the tests, run the `tox` command:
+
+```bash
+➤ tox
+```
+
+It first starts with a bunch of checks (`flask8` and others) and then launch the tests using python 2.7/3.
 
 Usage
 ==========

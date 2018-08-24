@@ -1,2 +1,1 @@
-ansicolors==1.1.8
-future==0.16.0
+-e .

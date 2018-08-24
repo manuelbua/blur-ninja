@@ -25,10 +25,10 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Topic :: Utilities',
     ],
-    keywords=[
-
-    ],
+    keywords=[],
     install_requires=[
+        "ansicolors==1.1.8",
+        "future==0.16.0",
     ],
     extras_require={},
     entry_points={
